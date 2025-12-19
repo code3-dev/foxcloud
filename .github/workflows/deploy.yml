@@ -25,8 +25,17 @@ jobs:
       - name: Build project
         run: npm run build
         
+      - name: Inject GitHub Vars into wrangler.toml
+        env:
+          GH_UUID: ${{ vars.UUID }}
+          GH_PROXY_IP: ${{ vars.PROXY_IP }}
+        run: |
+          sed -i "s|UUID = \".*\"|UUID = \"$GH_UUID\"|g" wrangler.toml
+          sed -i "s|PROXY_IP = \".*\"|PROXY_IP = \"$GH_PROXY_IP\"|g" wrangler.toml
+        
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+

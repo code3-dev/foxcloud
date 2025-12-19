@@ -450,52 +450,7 @@ const errorPageText = `<!DOCTYPE html>
 </body>
 </html>`
 
-export async function indexPage(): Promise<Response> {
-  return new Response(indexPageText, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-    },
-  })
-}
-
-export async function errorPage(): Promise<Response> {
-  return new Response(errorPageText, {
-    status: 500,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-    },
-  })
-}
-
-// Subscription page with enhanced UI
-export async function subscriptionPage(env: any, request: Request): Promise<Response> {
-  const { splitAndFilter } = await import('../utils/array.ts')
-  const { generateSubscription, generateVlessConfig } = await import('../services/subscription.ts')
-  
-  const uuids = splitAndFilter(env.UUID || '', ',')
-  const url = new URL(request.url)
-  
-  // Generate subscription links for each UUID
-  const subscriptions = uuids.map((uuid: string) => ({
-    uuid,
-    link: generateSubscription(uuid, url),
-    vlessJson: JSON.stringify(generateVlessConfig(uuid, url), null, 2)
-  }))
-
-  // Properly escape strings for HTML/JavaScript
-  const escapeHtml = (str: string) => {
-    return str.replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#039;');
-  };
-
-  // Get the first subscription if it exists
-  const firstSubscription = subscriptions.length > 0 ? subscriptions[0] : null;
-
-  const subscriptionPageText = `<!DOCTYPE html>
+  const subscriptionPageTextMaker = subscription => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -945,21 +900,21 @@ export async function subscriptionPage(env: any, request: Request): Promise<Resp
     <!-- Removed the subscription URL card as requested -->
 
     <div class="cards-container">
-      ${firstSubscription ? `
-        <div class="card" data-uuid="${firstSubscription.uuid}">
+      ${subscription ? `
+        <div class="card" data-uuid="${subscription.uuid}">
           <div class="card-header">
             <h2 class="card-title">🦊 VLESS Configuration</h2>
-            <span class="card-id">${firstSubscription.uuid.substring(0, 8)}...</span>
+            <span class="card-id">${subscription.uuid.substring(0, 8)}...</span>
           </div>
           
           <div class="config-container">
-            <div style="white-space: pre-wrap; word-break: break-all;">${escapeHtml(firstSubscription.link)}</div>
+            <div style="white-space: pre-wrap; word-break: break-all;">${escapeHtml(subscription.link)}</div>
           </div>
           <div class="config-hint" style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
             <small>💡 On mobile devices, scroll horizontally to view the full configuration</small>
           </div>
           <div class="actions">
-            <button class="btn btn-copy" data-config="${escapeHtml(firstSubscription.link)}">
+            <button class="btn btn-copy" data-config="${escapeHtml(subscription.link)}">
               📋 Copy VLESS
             </button>
           </div>
@@ -1049,10 +1004,67 @@ export async function subscriptionPage(env: any, request: Request): Promise<Resp
 </body>
 </html>`
 
-  return new Response(subscriptionPageText, {
+// Properly escape strings for HTML/JavaScript
+const escapeHtml = (str: string) => {
+return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+};
+
+export async function indexPage(): Promise<Response> {
+  return new Response(indexPageText, {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
     },
   })
+}
+
+export async function errorPage(): Promise<Response> {
+  return new Response(errorPageText, {
+    status: 500,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+    },
+  })
+}
+
+// Subscription page with enhanced UI
+export async function subscriptionPage(env: any, request: Request): Promise<Response> {
+  const { splitAndFilter } = await import('../utils/array.ts')
+  const { generateSubscription, generateVlessConfig } = await import('../services/subscription.ts')
+  
+  const uuids = splitAndFilter(env.UUID || '', ',')
+  const url = new URL(request.url)
+  
+  // Generate subscription links for each UUID
+  const subscriptions = uuids.map((uuid: string) => ({
+    uuid,
+    link: generateSubscription(uuid, url),
+    vlessJson: JSON.stringify(generateVlessConfig(uuid, url), null, 2)
+  }))
+
+  let targetSubscription = null;
+  for (const sub of subscriptions) {
+    if (url.pathname.includes(sub.uuid)) {
+      targetSubscription = sub;
+      break;
+    }
+  }
+
+  if (targetSubscription) {
+    const subscriptionPageText = subscriptionPageTextMaker(targetSubscription)
+
+    return new Response(subscriptionPageText, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    })
+  } else {
+      return errorPage()
+  }
+
 }
