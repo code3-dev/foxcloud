@@ -1,24 +1,14 @@
-name = "foxcloud"
-main = "dist/worker.js"
-compatibility_date = "2024-09-23"
+[observability]
+enabled = false
+head_sampling_rate = 1
 
-[build]
-command = "npm run build"
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
 
-# Development configuration
-[vars]
-# Generate secure UUIDs using:
-# Linux/macOS: cat /proc/sys/kernel/random/uuid
-# Windows PowerShell: New-Guid
-# Node.js: node -e "console.log(require('crypto').randomUUID())"
-UUID = "your-uuid-here"
-
-# Proxy server configuration
-# Format: IP:port (multiple servers separated by commas)
-PROXY_IP = "your-proxy-ip:443"
-
-# For multiple users, use comma-separated UUIDs:
-# UUID = "uuid1,uuid2,uuid3"
-
-# For multiple proxy servers, use comma-separated IPs:
-# PROXY_IP = "ip1:port1,ip2:port2,ip3:port3"
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1

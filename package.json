@@ -32,7 +32,7 @@
     "@cloudflare/workers-types": "^4.20251011.0",
     "typescript-eslint": "^8.46.1",
     "unplugin-swc": "^1.5.7",
-    "wrangler": "^4.43.0",
+    "wrangler": "^4.82.1",
     "typescript": "^5.8.3"
   }
 }
